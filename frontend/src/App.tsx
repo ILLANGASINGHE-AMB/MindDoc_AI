@@ -1,6 +1,24 @@
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { uploadDocument, askAgent, clearDatabase } from './api';
 import type { ChatMessage } from './api';
+import { 
+  Home, 
+  FileText, 
+  MessageSquare, 
+  Settings, 
+  Lock, 
+  FilePlus,
+  Lightbulb, 
+  MessageCircle, 
+  Paperclip, 
+  Send,
+  FileSearch,
+  BrainCircuit,
+  ShieldCheck,
+  Zap,
+  User,
+  Bot
+} from 'lucide-react';
 
 function App() {
   const [file, setFile] = useState<File | null>(null);
@@ -10,19 +28,32 @@ function App() {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState('');
   const [asking, setAsking] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  const handleUpload = async () => {
-    if (!file) return;
+  // Auto-scroll to bottom of chat
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [messages, asking]);
+
+  const handleUpload = async (selectedFile: File) => {
     setUploading(true);
     try {
-      const res = await uploadDocument(file);
+      const res = await uploadDocument(selectedFile);
       setDocuments(prev => [...prev, {id: res.doc_id, pages: res.num_pages}]);
-      setFile(null);
+      alert("Document uploaded and indexed successfully!");
     } catch (e) {
       console.error(e);
       alert("Error uploading document");
     } finally {
       setUploading(false);
+      if (fileInputRef.current) fileInputRef.current.value = '';
+    }
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files.length > 0) {
+      handleUpload(e.target.files[0]);
     }
   };
 
@@ -69,99 +100,169 @@ function App() {
 
   return (
     <div className="app-container">
-      {/* Sidebar / Document Manager */}
-      <div className="sidebar glass-panel" style={{ padding: '20px' }}>
-        <h2>DocMind AI</h2>
-        <p style={{color: 'var(--text-muted)', marginBottom: '20px', fontSize: '0.9rem'}}>Local Privacy-First Intelligence</p>
+      {/* Sidebar */}
+      <div className="sidebar">
+        <div className="sidebar-logo">
+          <img src="/logo.png" alt="DocMind Logo" />
+          <h1>DocMind <span>AI</span></h1>
+        </div>
         
-        <div style={{ marginBottom: '20px' }}>
-          <h3 style={{marginBottom: '10px', fontSize: '1rem'}}>Upload Document</h3>
-          <div style={{display: 'flex', flexDirection: 'column', gap: '10px'}}>
-            <input 
-              type="file" 
-              accept=".pdf"
-              className="glass-input" 
-              onChange={e => setFile(e.target.files?.[0] || null)}
-            />
-            <button 
-              className="glass-btn"
-              onClick={handleUpload}
-              disabled={!file || uploading}
-            >
-              {uploading ? 'Processing...' : 'Upload & Extract'}
-            </button>
+        <div className="nav-menu">
+          <div className="nav-item active">
+            <Home size={20} />
+            <span>Home</span>
+          </div>
+          <div className="nav-item">
+            <FileText size={20} />
+            <span>Documents ({documents.length})</span>
+          </div>
+          <div className="nav-item">
+            <MessageSquare size={20} />
+            <span>Chat</span>
+          </div>
+          <div className="nav-item" onClick={handleClear} style={{ color: '#ef4444' }}>
+            <Settings size={20} />
+            <span>Clear Memory</span>
           </div>
         </div>
         
-        <div>
-          <h3 style={{marginBottom: '10px', fontSize: '1rem'}}>Knowledge Base</h3>
-          {documents.length === 0 ? (
-            <p style={{color: 'var(--text-muted)', fontSize: '0.9rem'}}>No documents uploaded yet.</p>
-          ) : (
-            documents.map((doc, i) => (
-              <div key={i} className="doc-item">
-                <div className="doc-title">{doc.id}</div>
-                <div className="doc-meta">{doc.pages} Pages • Indexed</div>
+        <div className="sidebar-footer">
+          <div className="local-mode-badge">
+            <div>
+              <div className="status">
+                <div className="dot"></div>
+                Local Mode
               </div>
-            ))
-          )}
-        </div>
-
-        <div style={{ marginTop: 'auto', paddingTop: '20px', borderTop: '1px solid var(--border-color)' }}>
-          <button 
-            className="glass-btn glass-btn-secondary" 
-            style={{ width: '100%', color: '#ef4444', borderColor: 'rgba(239, 68, 68, 0.2)' }}
-            onClick={handleClear}
-          >
-            Clear All Memory
-          </button>
+              <div className="desc">No internet connection required</div>
+            </div>
+            <Lock size={16} color="var(--text-muted)" />
+          </div>
+          <div className="privacy-note">
+            Your Documents. Your Privacy.
+          </div>
         </div>
       </div>
 
-      {/* Main Chat Area */}
-      <div className="main-content glass-panel chat-window">
-        <div className="chat-history">
-          {messages.length === 0 ? (
-            <div style={{flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column'}}>
-              <h1 style={{margin: 0}}>Ask DocMind</h1>
-              <p style={{color: 'var(--text-muted)'}}>Upload a PDF to get started, then ask questions.</p>
+      {/* Main Content Area */}
+      <div className="main-content">
+        {messages.length === 0 ? (
+          /* Empty State / Hero */
+          <div className="hero-section">
+            <div className="hero-logo">
+              <img src="/logo.png" alt="Logo Large" />
+              <p>Your local AI agent for intelligent PDF understanding.<br/>Read, analyze, and reason over your documents — privately, offline, and intelligently.</p>
             </div>
-          ) : (
-            messages.map((msg, i) => (
-              <div key={i} className={`message ${msg.role}`}>
-                <div style={{whiteSpace: 'pre-wrap'}}>{msg.content}</div>
-                {msg.sources && msg.sources.length > 0 && (
-                  <div className="message-source">
-                    Sources: {msg.sources.map(s => `[${s.doc_id} P${s.page}]`).join(', ')}
-                  </div>
-                )}
+            
+            <div className="features-grid">
+              <div className="feature-card">
+                <FileSearch size={32} className="feature-icon" />
+                <h3>Read PDFs</h3>
+                <p>Text, images, tables</p>
               </div>
-            ))
-          )}
-          {asking && (
-            <div className="message agent">
-              <div className="loader"></div>
+              <div className="feature-card">
+                <BrainCircuit size={32} className="feature-icon" />
+                <h3>AI Agent</h3>
+                <p>Plans, searches, reasons</p>
+              </div>
+              <div className="feature-card">
+                <ShieldCheck size={32} className="feature-icon" />
+                <h3>100% Offline</h3>
+                <p>Your data stays local</p>
+              </div>
+              <div className="feature-card">
+                <Zap size={32} className="feature-icon" />
+                <h3>Multimodal</h3>
+                <p>Text, vision, OCR</p>
+              </div>
             </div>
-          )}
+            
+            <input 
+              type="file" 
+              accept=".pdf" 
+              style={{ display: 'none' }} 
+              ref={fileInputRef}
+              onChange={handleFileChange}
+            />
+            <div className="dropzone">
+              <FilePlus size={48} className="dropzone-icon" />
+              <button 
+                className="dropzone-btn"
+                onClick={() => fileInputRef.current?.click()}
+                disabled={uploading}
+              >
+                <FilePlus size={18} />
+                {uploading ? 'Processing...' : 'Add PDF'}
+              </button>
+              <p>Click to add PDF files or drag and drop them here</p>
+              <span className="sub-text">Supports multiple PDFs</span>
+            </div>
+          </div>
+        ) : (
+          /* Chat History View */
+          <div className="chat-history-container">
+            {messages.map((msg, i) => (
+              <div key={i} className={`message ${msg.role}`}>
+                <div className="message-avatar">
+                  {msg.role === 'user' ? <User size={20} /> : <img src="/logo.png" alt="Agent" />}
+                </div>
+                <div className="message-bubble">
+                  <div style={{whiteSpace: 'pre-wrap'}}>{msg.content}</div>
+                  {msg.sources && msg.sources.length > 0 && (
+                    <div className="message-source">
+                      Sources: {msg.sources.map(s => `[${s.doc_id} P${s.page}]`).join(', ')}
+                    </div>
+                  )}
+                </div>
+              </div>
+            ))}
+            {asking && (
+              <div className="message agent">
+                <div className="message-avatar">
+                  <img src="/logo.png" alt="Agent" />
+                </div>
+                <div className="message-bubble">
+                  Thinking...
+                </div>
+              </div>
+            )}
+            <div ref={messagesEndRef} />
+          </div>
+        )}
+
+        {/* Bottom Chat Bar */}
+        <div className="bottom-chat-container">
+          <div className="chat-header">
+            <div>
+              <h2>Ask DocMind</h2>
+              <p>Ask questions about your PDFs. Get accurate answers with sources.</p>
+            </div>
+            <button className="example-btn">
+              <Lightbulb size={16} />
+              Example Questions
+            </button>
+          </div>
+          
+          <div className="chat-input-wrapper">
+            <MessageCircle size={20} className="input-icon-left" />
+            <input 
+              className="chat-input"
+              placeholder="Ask a question about your documents..." 
+              value={input}
+              onChange={e => setInput(e.target.value)}
+              onKeyDown={e => e.key === 'Enter' && handleSend()}
+              disabled={asking}
+            />
+            <div className="input-actions-right">
+              <button className="attach-btn" onClick={() => fileInputRef.current?.click()}>
+                <Paperclip size={20} />
+              </button>
+              <button className="send-btn" onClick={handleSend} disabled={asking || !input.trim()}>
+                <Send size={16} />
+              </button>
+            </div>
+          </div>
         </div>
         
-        <div className="chat-input-area">
-          <input 
-            className="glass-input" 
-            placeholder="Ask anything about your documents..." 
-            value={input}
-            onChange={e => setInput(e.target.value)}
-            onKeyDown={e => e.key === 'Enter' && handleSend()}
-            disabled={asking}
-          />
-          <button 
-            className="glass-btn" 
-            onClick={handleSend}
-            disabled={asking || !input.trim()}
-          >
-            Send
-          </button>
-        </div>
       </div>
     </div>
   );

@@ -51,13 +51,20 @@ def run_agent(question: str, doc_ids: list[str] = None) -> dict:
         context += "\n\nVisual analysis:\n" + "\n".join(vision_notes)
         
     # 5. Answer Generation
+    system_prompt = (
+        "You are DocMind, an expert AI document analysis assistant. "
+        "The user has uploaded a document, and the text of that document has been extracted and provided to you in the Context section. "
+        "Do NOT say you cannot read PDFs, access files, or view documents. The file's contents are already given to you in the Context. "
+        "Read the Context and answer the user's question as if you are reading the document directly."
+    )
+    
     answer_prompt = (
-        "Answer the question using ONLY the provided context. "
-        "Cite document and page for every claim. "
-        "If the context is insufficient, say so explicitly.\n\n"
+        "Using ONLY the provided context, answer the user's question. "
+        "Cite the document name and page number for every claim. "
+        "If the context is insufficient or does not contain the answer, say so explicitly.\n\n"
         f"Context:\n{context}\n\nQuestion: {question}"
     )
-    answer = generate(answer_prompt)
+    answer = generate(answer_prompt, system=system_prompt)
     activity_log.append("Generated draft answer")
     
     # 6. Verification
