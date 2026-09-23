@@ -82,6 +82,7 @@ async def upload_document(file: UploadFile = File(...)):
         return JSONResponse(status_code=200, content={
             "message": "Document uploaded and extracted successfully.",
             "doc_id": doc_id,
+            "filename": file.filename,
             "num_pages": extracted_data["num_pages"]
         })
         

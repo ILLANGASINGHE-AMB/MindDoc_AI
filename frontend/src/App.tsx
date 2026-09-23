@@ -11,7 +11,7 @@ import {
 
 function App() {
   const [uploading, setUploading] = useState(false);
-  const [documents, setDocuments] = useState<{id: string, pages: number}[]>([]);
+  const [documents, setDocuments] = useState<{id: string, pages: number, filename: string}[]>([]);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState('');
   const [asking, setAsking] = useState(false);
@@ -28,7 +28,7 @@ function App() {
     setUploading(true);
     try {
       const res = await uploadDocument(selectedFile);
-      setDocuments(prev => [...prev, {id: res.doc_id, pages: res.num_pages}]);
+      setDocuments(prev => [...prev, {id: res.doc_id, pages: res.num_pages, filename: res.filename || selectedFile.name}]);
       alert("Document uploaded and indexed successfully!");
     } catch (e) {
       console.error(e);
@@ -114,10 +114,15 @@ function App() {
             {uploading ? 'Processing...' : 'ADD PDF'}
           </button>
           
-          <div className="doc-count">
-            <span className="dot"></span>
-            {documents.length} PDF{documents.length !== 1 ? 's' : ''} uploaded
-          </div>
+          {documents.length > 0 && (
+            <div className="doc-count">
+              <span className="dot"></span>
+              <div className="doc-list-text">
+                <strong>{documents.length} PDF{documents.length !== 1 ? 's' : ''} uploaded:</strong>
+                <span>{documents.map(d => d.filename).join(', ')}</span>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Chat History Container (Only shows when there are messages) */}

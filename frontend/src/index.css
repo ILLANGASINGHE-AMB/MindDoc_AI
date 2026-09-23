@@ -118,11 +118,12 @@ body {
   color: var(--text-muted);
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 12px;
   background-color: rgba(255, 255, 255, 0.03);
-  padding: 6px 12px;
-  border-radius: 20px;
+  padding: 8px 16px;
+  border-radius: 12px;
   border: 1px solid var(--border-color);
+  max-width: 600px;
 }
 
 .doc-count .dot {
@@ -131,6 +132,23 @@ body {
   background-color: var(--success-color);
   border-radius: 50%;
   box-shadow: 0 0 8px var(--success-color);
+  flex-shrink: 0;
+}
+
+.doc-list-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.doc-list-text strong {
+  color: var(--text-main);
+}
+
+.doc-list-text span {
+  font-size: 0.8rem;
+  line-height: 1.4;
+  word-break: break-word;
 }
 
 /* Chat Input Bar */
