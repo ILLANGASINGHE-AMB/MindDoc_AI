@@ -84,3 +84,15 @@ def search(query: str, k: int = 5, doc_ids: list[str] = None) -> list[dict]:
             })
             
     return formatted_results
+
+def clear_database():
+    """
+    Deletes all chunks from the database to reset the memory.
+    """
+    global collection
+    client.delete_collection("docmind_chunks")
+    collection = client.get_or_create_collection(
+        name="docmind_chunks",
+        metadata={"hnsw:space": "cosine"}
+    )
+

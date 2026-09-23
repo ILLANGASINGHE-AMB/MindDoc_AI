@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { uploadDocument, askAgent, ChatMessage } from './api';
+import { uploadDocument, askAgent, clearDatabase } from './api';
+import type { ChatMessage } from './api';
 
 function App() {
   const [file, setFile] = useState<File | null>(null);
@@ -52,6 +53,20 @@ function App() {
     }
   };
 
+  const handleClear = async () => {
+    if (!confirm("Are you sure you want to delete all uploaded documents and reset the AI's memory?")) return;
+    
+    try {
+      await clearDatabase();
+      setDocuments([]);
+      setMessages([]);
+      alert("Memory cleared successfully!");
+    } catch (e) {
+      console.error(e);
+      alert("Failed to clear memory");
+    }
+  };
+
   return (
     <div className="app-container">
       {/* Sidebar / Document Manager */}
@@ -90,6 +105,16 @@ function App() {
               </div>
             ))
           )}
+        </div>
+
+        <div style={{ marginTop: 'auto', paddingTop: '20px', borderTop: '1px solid var(--border-color)' }}>
+          <button 
+            className="glass-btn glass-btn-secondary" 
+            style={{ width: '100%', color: '#ef4444', borderColor: 'rgba(239, 68, 68, 0.2)' }}
+            onClick={handleClear}
+          >
+            Clear All Memory
+          </button>
         </div>
       </div>
 

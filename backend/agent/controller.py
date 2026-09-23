@@ -20,7 +20,10 @@ def run_agent(question: str, doc_ids: list[str] = None) -> dict:
     all_chunks = []
     
     # 2. Execute Search for sub-queries
-    sub_queries = p.get("sub_queries", [question])
+    sub_queries = p.get("sub_queries", [])
+    if not sub_queries:
+        sub_queries = [question]
+        
     for sub_q in sub_queries:
         chunks = retrieve(sub_q, k=5, doc_ids=doc_ids)
         all_chunks.extend(chunks)

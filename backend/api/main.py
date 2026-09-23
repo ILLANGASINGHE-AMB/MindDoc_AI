@@ -9,8 +9,9 @@ from fastapi.middleware.cors import CORSMiddleware
 from backend.pdf.parser import extract_document
 from backend.pdf.scan_detector import is_scanned_page
 from backend.ocr.ocr_engine import ocr_page
-from backend.ocr.ocr_engine import ocr_page
 from backend.agent.controller import run_agent
+from backend.rag.chunker import chunk_text
+from backend.database.vector_store import add_chunks, clear_database
 from pydantic import BaseModel
 from typing import List, Optional
 
@@ -53,15 +54,30 @@ async def upload_document(file: UploadFile = File(...)):
         for page in extracted_data["pages"]:
             page["is_scanned"] = is_scanned_page(page["text"])
             if page["is_scanned"]:
-                # The page is scanned, run OCR
-                ocr_result = ocr_page(str(pdf_path), page["page_number"])
-                page["text"] = ocr_result["text"]
-                page["ocr_confidence"] = ocr_result["confidence"]
+                # The page is scanned, try to run OCR
+                try:
+                    ocr_result = ocr_page(str(pdf_path), page["page_number"])
+                    page["text"] = ocr_result["text"]
+                    page["ocr_confidence"] = ocr_result["confidence"]
+                except Exception as e:
+                    print(f"OCR skipped for page {page['page_number']}: {str(e)}")
+                    page["text"] = "[Scanned page - OCR unavailable]"
+                    page["ocr_confidence"] = 0.0
             
         # Save JSON output
         json_path = EXTRACTED_DIR / f"{doc_id}.json"
         with open(json_path, "w", encoding="utf-8") as f:
             json.dump(extracted_data, f, ensure_ascii=False, indent=2)
+            
+        # Chunk and embed into Vector DB
+        all_chunks = []
+        for page in extracted_data["pages"]:
+            if page["text"] and not page["text"].startswith("[Scanned page - OCR unavailable]"):
+                chunks = chunk_text(page["text"], page_number=page["page_number"], doc_id=doc_id)
+                all_chunks.extend(chunks)
+        
+        if all_chunks:
+            add_chunks(all_chunks)
             
         return JSONResponse(status_code=200, content={
             "message": "Document uploaded and extracted successfully.",
@@ -75,6 +91,22 @@ async def upload_document(file: UploadFile = File(...)):
 @app.get("/health")
 def health_check():
     return {"status": "ok"}
+
+@app.delete("/documents/clear")
+def clear_all_documents():
+    try:
+        clear_database()
+        
+        # Clear local files to completely reset memory
+        for p in DOCUMENTS_DIR.glob("*"):
+            if p.is_file(): p.unlink()
+        for p in EXTRACTED_DIR.glob("*"):
+            if p.is_file(): p.unlink()
+            elif p.is_dir(): shutil.rmtree(p)
+            
+        return JSONResponse(status_code=200, content={"message": "All memory cleared."})
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 class AskRequest(BaseModel):
     question: str

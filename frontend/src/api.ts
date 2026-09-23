@@ -18,7 +18,7 @@ export const uploadDocument = async (file: File) => {
 export interface ChatMessage {
   role: 'user' | 'agent';
   content: string;
-  sources?: { doc_id: string; page: int }[];
+  sources?: { doc_id: string; page: number }[];
 }
 
 export const askAgent = async (question: string, doc_ids?: string[]) => {
@@ -27,5 +27,10 @@ export const askAgent = async (question: string, doc_ids?: string[]) => {
     doc_ids
   });
   
+  return response.data;
+};
+
+export const clearDatabase = async () => {
+  const response = await axios.delete(`${API_BASE_URL}/documents/clear`);
   return response.data;
 };
