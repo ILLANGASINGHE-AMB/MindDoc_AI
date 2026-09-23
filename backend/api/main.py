@@ -7,6 +7,7 @@ from fastapi.responses import JSONResponse
 
 from backend.pdf.parser import extract_document
 from backend.pdf.scan_detector import is_scanned_page
+from backend.ocr.ocr_engine import ocr_page
 from backend.rag.retriever import retrieve
 from backend.rag.context_builder import build_context
 from backend.agent.llm_client import generate
@@ -40,9 +41,14 @@ async def upload_document(file: UploadFile = File(...)):
         output_dir = EXTRACTED_DIR / doc_id
         extracted_data = extract_document(str(pdf_path), str(output_dir))
         
-        # Tag scanned pages
+        # Tag scanned pages and run OCR if necessary
         for page in extracted_data["pages"]:
             page["is_scanned"] = is_scanned_page(page["text"])
+            if page["is_scanned"]:
+                # The page is scanned, run OCR
+                ocr_result = ocr_page(str(pdf_path), page["page_number"])
+                page["text"] = ocr_result["text"]
+                page["ocr_confidence"] = ocr_result["confidence"]
             
         # Save JSON output
         json_path = EXTRACTED_DIR / f"{doc_id}.json"
