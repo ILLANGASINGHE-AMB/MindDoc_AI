@@ -1,8 +1,8 @@
 from sentence_transformers import SentenceTransformer
+from backend.config import config
 
 # Load the model once globally so it doesn't reload on every function call.
-# all-MiniLM-L6-v2 is small, fast, and works perfectly on CPU.
-model = SentenceTransformer("all-MiniLM-L6-v2")
+model = SentenceTransformer(config.embedding_model)
 
 def embed_text(text: str) -> list[float]:
     """

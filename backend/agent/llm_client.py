@@ -1,6 +1,9 @@
 import ollama
+from backend.config import config
 
-def generate(prompt: str, model: str = "qwen2.5:7b-instruct", system: str = None) -> str:
+def generate(prompt: str, model: str = None, system: str = None) -> str:
+    if model is None:
+        model = config.agent_model
     """
     Sends a prompt to the local Ollama instance and returns the generated text response.
     """
