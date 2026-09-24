@@ -6,7 +6,7 @@ from backend.agent.llm_client import generate
 from backend.agent.tools.verify_tool import verify_answer
 import json
 
-def run_agent(question: str, doc_ids: list[str] = None) -> dict:
+def run_agent(question: str, doc_ids: list[str] = None, history: list = None) -> dict:
     """
     The main orchestrator for the DocMind Agent.
     It plans, searches, gathers context (including vision), reasons, and verifies.
@@ -64,7 +64,7 @@ def run_agent(question: str, doc_ids: list[str] = None) -> dict:
         "If the context is insufficient or does not contain the answer, say so explicitly.\n\n"
         f"Context:\n{context}\n\nQuestion: {question}"
     )
-    answer = generate(answer_prompt, system=system_prompt)
+    answer = generate(answer_prompt, system=system_prompt, history=history)
     activity_log.append("Generated draft answer")
     
     # 6. Verification

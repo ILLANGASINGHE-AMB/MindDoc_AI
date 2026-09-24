@@ -11,6 +11,7 @@ from backend.pdf.scan_detector import is_scanned_page
 from backend.ocr.ocr_engine import ocr_page, ocr_image
 from backend.agent.controller import run_agent
 from backend.agent.vision_client import describe_image
+from backend.agent.llm_client import generate
 from backend.rag.chunker import chunk_text
 from backend.database.vector_store import add_chunks, clear_database
 from pydantic import BaseModel
@@ -130,14 +131,57 @@ def clear_all_documents():
 class AskRequest(BaseModel):
     question: str
     doc_ids: Optional[List[str]] = None
+    history: Optional[List[dict]] = []
 
 @app.post("/agent/ask")
 def ask_agent(req: AskRequest):
     try:
         # Run the full agent loop (Plan -> Retrieve -> Vision -> Reason -> Verify)
-        result = run_agent(question=req.question, doc_ids=req.doc_ids)
+        result = run_agent(question=req.question, doc_ids=req.doc_ids, history=req.history)
         
         return result
         
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/documents/{doc_id}/summarize")
+def summarize_document(doc_id: str):
+    try:
+        json_path = EXTRACTED_DIR / f"{doc_id}.json"
+        if not json_path.exists():
+            raise HTTPException(status_code=404, detail="Document not found")
+            
+        with open(json_path, "r", encoding="utf-8") as f:
+            data = json.load(f)
+            
+        # Combine text from all pages
+        full_text = "\n".join([p["text"] for p in data["pages"]])
+        
+        # Avoid overflowing context window if doc is huge
+        # take first 15000 characters for a rough summary
+        trunc_text = full_text[:15000]
+        
+        prompt = f"Summarize the following document in a concise, structured way:\n\n{trunc_text}"
+        summary = generate(prompt, system="You are an expert at extracting and summarizing key information from documents.")
+        
+        return {"summary": summary}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/documents/{doc_id}/page/{page_number}")
+def get_document_page(doc_id: str, page_number: int):
+    try:
+        json_path = EXTRACTED_DIR / f"{doc_id}.json"
+        if not json_path.exists():
+            raise HTTPException(status_code=404, detail="Document not found")
+            
+        with open(json_path, "r", encoding="utf-8") as f:
+            data = json.load(f)
+            
+        for page in data["pages"]:
+            if page["page_number"] == page_number:
+                return {"text": page["text"]}
+                
+        raise HTTPException(status_code=404, detail="Page not found")
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))

@@ -44,7 +44,6 @@ body {
   overflow: hidden;
 }
 
-/* Main Content Area */
 .main-content {
   flex: 1;
   display: flex;
@@ -56,6 +55,15 @@ body {
   padding: 20px;
   position: relative;
   z-index: 10;
+  min-height: 0; /* Fix flexbox scrolling */
+}
+
+/* Flex-shrink preventers */
+.hero-logo,
+.add-pdf-container,
+.chat-input-wrapper,
+.clear-memory-btn {
+  flex-shrink: 0;
 }
 
 /* Logo Animation */
@@ -74,6 +82,14 @@ body {
 .hero-logo img {
   width: 160px;
   object-fit: contain;
+}
+
+/* Landing View specific wrapper */
+.landing-view {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
 }
 
 /* Big Add PDF Button */
@@ -149,6 +165,32 @@ body {
   font-size: 0.8rem;
   line-height: 1.4;
   word-break: break-word;
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.doc-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.summarize-btn {
+  background: none;
+  border: none;
+  color: var(--accent-primary);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2px;
+  border-radius: 4px;
+  transition: background 0.2s;
+}
+
+.summarize-btn:hover {
+  background: rgba(168, 85, 247, 0.2);
 }
 
 /* Chat Input Bar */
@@ -202,9 +244,10 @@ body {
   right: 12px;
   display: flex;
   align-items: center;
+  gap: 8px;
 }
 
-.send-btn {
+.mini-upload-btn, .send-btn {
   background-color: transparent;
   color: var(--text-muted);
   border: none;
@@ -218,12 +261,12 @@ body {
   border-radius: 50%;
 }
 
-.send-btn:hover:not(:disabled) {
+.mini-upload-btn:hover:not(:disabled), .send-btn:hover:not(:disabled) {
   color: var(--text-main);
   background-color: rgba(255, 255, 255, 0.05);
 }
 
-.send-btn:disabled {
+.mini-upload-btn:disabled, .send-btn:disabled {
   color: var(--text-dim);
   cursor: not-allowed;
 }
@@ -258,6 +301,7 @@ body {
   display: flex;
   flex-direction: column;
   gap: 24px;
+  min-height: 0; /* Fix flexbox scrolling */
 }
 
 .message {
@@ -319,6 +363,98 @@ body {
   border-top: 1px solid var(--border-color);
   font-size: 0.8rem;
   color: var(--accent-primary);
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.source-link {
+  background: rgba(168, 85, 247, 0.1);
+  border: 1px solid rgba(168, 85, 247, 0.3);
+  color: #d8b4fe;
+  padding: 2px 8px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-family: inherit;
+  font-size: 0.75rem;
+}
+
+.source-link:hover {
+  background: rgba(168, 85, 247, 0.25);
+  transform: translateY(-1px);
+}
+
+/* Modal Styles */
+.modal-backdrop {
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(4px);
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.modal-content {
+  background: var(--bg-input);
+  border: 1px solid rgba(168, 85, 247, 0.3);
+  border-radius: 16px;
+  width: 90%;
+  max-width: 700px;
+  max-height: 80vh;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+  animation: slide-up 0.2s ease-out;
+}
+
+@keyframes slide-up {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.modal-header {
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--border-color);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.modal-header h3 {
+  margin: 0;
+  font-size: 1.1rem;
+  color: var(--accent-primary);
+}
+
+.modal-close {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  display: flex;
+  transition: color 0.2s;
+}
+
+.modal-close:hover {
+  color: var(--text-main);
+}
+
+.modal-body {
+  padding: 20px;
+  overflow-y: auto;
+  font-size: 0.9rem;
+  line-height: 1.6;
+}
+
+.modal-body pre {
+  white-space: pre-wrap;
+  font-family: inherit;
+  color: var(--text-main);
+  margin: 0;
 }
 
 /* Scrollbar */

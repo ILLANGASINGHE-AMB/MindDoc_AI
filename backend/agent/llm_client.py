@@ -1,7 +1,7 @@
 import ollama
 from backend.config import config
 
-def generate(prompt: str, model: str = None, system: str = None) -> str:
+def generate(prompt: str, model: str = None, system: str = None, history: list = None) -> str:
     if model is None:
         model = config.agent_model
     """
@@ -15,6 +15,16 @@ def generate(prompt: str, model: str = None, system: str = None) -> str:
             "role": "system",
             "content": system
         })
+        
+    # Append conversation history
+    if history:
+        for msg in history:
+            # We assume history comes from the frontend format: { "sender": "user" | "agent", "text": "..." }
+            role = "user" if msg.get("sender") == "user" else "assistant"
+            messages.append({
+                "role": role,
+                "content": msg.get("text", "")
+            })
         
     # Append the user's prompt
     messages.append({
