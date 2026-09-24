@@ -96,11 +96,11 @@ function App() {
           <img src="/logo.png" alt="DocMind Logo" />
         </div>
 
-        {/* Add PDF Button */}
+        {/* Add File Button */}
         <div className="add-pdf-container">
           <input 
             type="file" 
-            accept=".pdf" 
+            accept=".pdf,image/png,image/jpeg,image/jpg" 
             style={{ display: 'none' }} 
             ref={fileInputRef}
             onChange={handleFileChange}
@@ -111,14 +111,14 @@ function App() {
             disabled={uploading}
           >
             <FilePlus size={24} />
-            {uploading ? 'Processing...' : 'ADD PDF'}
+            {uploading ? 'Processing...' : 'ADD FILE'}
           </button>
           
           {documents.length > 0 && (
             <div className="doc-count">
               <span className="dot"></span>
               <div className="doc-list-text">
-                <strong>{documents.length} PDF{documents.length !== 1 ? 's' : ''} uploaded:</strong>
+                <strong>{documents.length} File{documents.length !== 1 ? 's' : ''} uploaded:</strong>
                 <span>{documents.map(d => d.filename).join(', ')}</span>
               </div>
             </div>

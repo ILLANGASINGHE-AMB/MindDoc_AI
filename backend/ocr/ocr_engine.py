@@ -36,3 +36,25 @@ def ocr_page(pdf_path: str, page_number: int, dpi: int = 300) -> dict:
         "text": text,
         "confidence": avg_conf
     }
+
+def ocr_image(image_path: str) -> dict:
+    """
+    Runs OCR on a standalone image file (PNG/JPG).
+    Returns the extracted text and a confidence score.
+    """
+    img = Image.open(image_path)
+    
+    # Extract data including confidence scores
+    data = pytesseract.image_to_data(img, output_type=pytesseract.Output.DICT)
+    
+    # Extract raw text
+    text = pytesseract.image_to_string(img)
+    
+    # Calculate average confidence
+    confidences = [int(c) for c in data["conf"] if str(c) != "-1"]
+    avg_conf = sum(confidences) / len(confidences) if confidences else 0
+    
+    return {
+        "text": text,
+        "confidence": avg_conf
+    }
