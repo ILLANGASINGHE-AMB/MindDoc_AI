@@ -23,10 +23,15 @@ export const AIBrainPage: React.FC = () => {
 
     // Close existing connection if any
     if (wsRef.current) {
-      wsRef.current.onclose = null;
-      wsRef.current.onerror = null;
-      wsRef.current.onmessage = null;
-      try { wsRef.current.close(); } catch {}
+      const ws = wsRef.current;
+      ws.onclose = null;
+      ws.onerror = null;
+      ws.onmessage = null;
+      if (ws.readyState === WebSocket.CONNECTING) {
+        ws.onopen = () => ws.close();
+      } else {
+        try { ws.close(); } catch {}
+      }
       wsRef.current = null;
     }
 
@@ -76,8 +81,13 @@ export const AIBrainPage: React.FC = () => {
         clearTimeout(reconnectTimerRef.current);
       }
       if (wsRef.current) {
-        wsRef.current.onclose = null; // prevent reconnect on unmount
-        wsRef.current.close();
+        const ws = wsRef.current;
+        ws.onclose = null; // prevent reconnect on unmount
+        if (ws.readyState === WebSocket.CONNECTING) {
+          ws.onopen = () => ws.close();
+        } else {
+          try { ws.close(); } catch {}
+        }
         wsRef.current = null;
       }
     };
