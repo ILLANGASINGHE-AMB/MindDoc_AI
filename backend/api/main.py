@@ -9,13 +9,17 @@ from fastapi.middleware.cors import CORSMiddleware
 from backend.pdf.parser import extract_document
 from backend.pdf.scan_detector import is_scanned_page
 from backend.ocr.ocr_engine import ocr_page, ocr_image
+from backend.office.parser import extract_docx, extract_pptx, extract_xlsx
 from backend.agent.controller import run_agent
 from backend.agent.vision_client import describe_image
 from backend.agent.llm_client import generate
 from backend.rag.chunker import chunk_text
 from backend.database.vector_store import add_chunks, clear_database
+from backend.api.ws_manager import manager
 from pydantic import BaseModel
 from typing import List, Optional
+import asyncio
+from fastapi import WebSocket, WebSocketDisconnect
 
 app = FastAPI(title="DocMind API")
 
@@ -35,11 +39,25 @@ EXTRACTED_DIR = DATA_DIR / "extracted"
 DOCUMENTS_DIR.mkdir(parents=True, exist_ok=True)
 EXTRACTED_DIR.mkdir(parents=True, exist_ok=True)
 
+@app.on_event("startup")
+async def startup_event():
+    manager.set_loop(asyncio.get_running_loop())
+
+@app.websocket("/agent/ws")
+async def websocket_endpoint(websocket: WebSocket):
+    await manager.connect(websocket)
+    try:
+        while True:
+            await websocket.receive_text()
+    except WebSocketDisconnect:
+        manager.disconnect(websocket)
+
 @app.post("/documents/upload")
 async def upload_document(file: UploadFile = File(...)):
     filename = file.filename.lower()
-    if not (filename.endswith('.pdf') or filename.endswith('.png') or filename.endswith('.jpg') or filename.endswith('.jpeg')):
-        raise HTTPException(status_code=400, detail="Only PDF, PNG, JPG, and JPEG files are supported.")
+    allowed_exts = ('.pdf', '.png', '.jpg', '.jpeg', '.docx', '.pptx', '.xlsx')
+    if not filename.endswith(allowed_exts):
+        raise HTTPException(status_code=400, detail="Unsupported file format.")
     
     # Save raw file
     doc_id = os.path.splitext(file.filename)[0]
@@ -81,7 +99,7 @@ async def upload_document(file: UploadFile = File(...)):
                 if page["text"] and not page["text"].startswith("[Scanned page - OCR unavailable]"):
                     chunks = chunk_text(page["text"], page_number=page["page_number"], doc_id=doc_id)
                     all_chunks.extend(chunks)
-        else:
+        elif filename.endswith(('.png', '.jpg', '.jpeg')):
             # Process Image (PNG/JPG/JPEG)
             ocr_res = ocr_image(str(file_path))
             visual_desc = describe_image(str(file_path))
@@ -92,7 +110,31 @@ async def upload_document(file: UploadFile = File(...)):
                 f"**Extracted Text (OCR)**:\n{ocr_res['text']}\n"
             )
             
+            # Save JSON output for summarizer
+            extracted_data = {"num_pages": 1, "pages": [{"page_number": 1, "text": combined_text}]}
+            json_path = EXTRACTED_DIR / f"{doc_id}.json"
+            with open(json_path, "w", encoding="utf-8") as f:
+                json.dump(extracted_data, f, ensure_ascii=False, indent=2)
+                
             chunks = chunk_text(combined_text, page_number=1, doc_id=doc_id)
+            all_chunks.extend(chunks)
+            
+        else:
+            # Process Office files
+            if filename.endswith('.docx'):
+                raw_text = extract_docx(str(file_path))
+            elif filename.endswith('.pptx'):
+                raw_text = extract_pptx(str(file_path))
+            elif filename.endswith('.xlsx'):
+                raw_text = extract_xlsx(str(file_path))
+                
+            # Save JSON output for summarizer
+            extracted_data = {"num_pages": 1, "pages": [{"page_number": 1, "text": raw_text}]}
+            json_path = EXTRACTED_DIR / f"{doc_id}.json"
+            with open(json_path, "w", encoding="utf-8") as f:
+                json.dump(extracted_data, f, ensure_ascii=False, indent=2)
+                
+            chunks = chunk_text(raw_text, page_number=1, doc_id=doc_id)
             all_chunks.extend(chunks)
         
         if all_chunks:

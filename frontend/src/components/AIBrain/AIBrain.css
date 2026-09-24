@@ -1,0 +1,132 @@
+.aibrain-view {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  padding: 20px;
+  box-sizing: border-box;
+  color: var(--text-main);
+}
+
+.aibrain-header {
+  border-bottom: 1px dashed var(--border-dashed);
+  padding-bottom: 10px;
+  margin-bottom: 20px;
+}
+
+.aibrain-header h2 {
+  color: var(--accent);
+  margin: 0 0 5px 0;
+  font-size: 1.2rem;
+  letter-spacing: 2px;
+}
+
+.aibrain-subtitle {
+  color: var(--text-muted);
+  font-size: 0.9rem;
+}
+
+.aibrain-canvas-container {
+  flex: 1;
+  border: 1px dashed var(--border-dashed);
+  position: relative;
+  min-height: 250px;
+  margin-bottom: 20px;
+  background-color: rgba(0, 0, 0, 0.2);
+  overflow: hidden;
+}
+
+.idle-overlay {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  text-align: center;
+  color: var(--text-muted);
+  pointer-events: none;
+}
+
+.idle-overlay div:first-child {
+  font-size: 1.5rem;
+  letter-spacing: 4px;
+  color: var(--accent);
+  opacity: 0.7;
+}
+
+.idle-sub {
+  font-size: 0.85rem;
+  margin-top: 5px;
+}
+
+.aibrain-panels {
+  display: flex;
+  gap: 20px;
+  height: 200px;
+}
+
+.aibrain-status-panel, .aibrain-log-panel {
+  border: 1px dashed var(--border-dashed);
+  padding: 15px;
+  display: flex;
+  flex-direction: column;
+}
+
+.aibrain-status-panel {
+  flex: 1;
+}
+
+.aibrain-log-panel {
+  flex: 2;
+}
+
+.panel-title {
+  color: var(--accent);
+  font-size: 0.9rem;
+  border-bottom: 1px dashed var(--border-dashed);
+  padding-bottom: 10px;
+  margin-bottom: 10px;
+  letter-spacing: 1px;
+}
+
+.status-row {
+  margin-bottom: 8px;
+  font-size: 0.9rem;
+}
+
+.status-label {
+  color: var(--text-muted);
+  display: inline-block;
+  width: 100px;
+}
+
+.status-value {
+  color: var(--text-main);
+  font-weight: bold;
+}
+
+.log-container {
+  flex: 1;
+  overflow-y: auto;
+  font-size: 0.85rem;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.log-item {
+  color: var(--text-main);
+}
+
+.log-time {
+  color: var(--text-muted);
+  margin-right: 8px;
+}
+
+.log-container::-webkit-scrollbar {
+  width: 8px;
+}
+.log-container::-webkit-scrollbar-track {
+  background: var(--bg-main);
+}
+.log-container::-webkit-scrollbar-thumb {
+  background: var(--border-dashed);
+}

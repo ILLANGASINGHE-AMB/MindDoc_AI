@@ -8,8 +8,8 @@ def describe_image(image_path: str) -> str:
     and returns a highly detailed textual description of its contents.
     """
     try:
-        # llama3.2-vision is the recommended vision model
-        model = "llama3.2-vision"
+        # Use llava:7b vision model (installed locally)
+        model = "llava:7b"
         
         prompt = (
             "You are a highly capable AI Vision assistant. "

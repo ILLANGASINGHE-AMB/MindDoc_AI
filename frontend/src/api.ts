@@ -19,6 +19,7 @@ export interface ChatMessage {
   role: 'user' | 'agent';
   content: string;
   sources?: { doc_id: string; page: number }[];
+  isNew?: boolean;
 }
 
 export const askAgent = async (question: string, doc_ids?: string[], history?: { sender: string; text: string }[]) => {
