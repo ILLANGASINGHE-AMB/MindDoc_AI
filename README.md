@@ -4,7 +4,7 @@
 
 DocMind AI is a fully local, offline, multimodal AI Agent designed to understand, search, analyze, and reason over documents containing text, scanned pages, images, tables, charts, and diagrams — all without requiring an internet connection.
 
-![DocMind AI UI](new_terminal_UI.png)
+![DocMind AI UI](DocMindAi_UI.png)
 
 ---
 
